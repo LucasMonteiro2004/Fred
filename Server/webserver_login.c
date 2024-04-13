@@ -1,0 +1,110 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#define PORT 8080
+#define BUFSIZE 4096
+
+void handle_connection(int sockfd) {
+    char buffer[BUFSIZE];
+    int n;
+
+    n = read(sockfd, buffer, BUFSIZE - 1);
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        return;
+    }
+    buffer[n] = '\0';
+
+    printf("Received request:\n%s\n", buffer);
+
+    const char *cors_headers = "Access-Control-Allow-Origin: *\n"
+                               "Access-Control-Allow-Methods: GET, POST, OPTIONS\n"
+                               "Access-Control-Allow-Headers: Content-Type\n";
+
+    if (strncmp(buffer, "OPTIONS", 7) == 0) {
+        char response[1024];
+        sprintf(response, "HTTP/1.1 204 No Content\n%s\n", cors_headers);
+        write(sockfd, response, strlen(response));
+    } else {
+        char *username_pos = strstr(buffer, "\"username\":\"");
+        char *password_pos = strstr(buffer, "\"password\":\"");
+        char username[50], password[50];
+        char response[1024];
+
+        if (username_pos && password_pos) {
+            // Move the pointer to the start of the actual username
+            username_pos += strlen("\"username\":\"");
+            // Find the end of the username value
+            char *username_end = strchr(username_pos, '\"');
+            // Copy the username into a buffer
+            int username_length = username_end - username_pos;
+            strncpy(username, username_pos, username_length);
+            username[username_length] = '\0';
+
+            // Move the pointer to the start of the actual password
+            password_pos += strlen("\"password\":\"");
+            // Find the end of the password value
+            char *password_end = strchr(password_pos, '\"');
+            // Copy the password into a buffer
+            int password_length = password_end - password_pos;
+            strncpy(password, password_pos, password_length);
+            password[password_length] = '\0';
+
+            // Verify username and password
+            if (strcmp(username, "admin") == 0 && strcmp(password, "1234") == 0) {
+                sprintf(response, "HTTP/1.1 200 OK\nContent-Type: application/json\n%s{\"status\": \"ok\"}\n", cors_headers);
+            } else {
+                sprintf(response, "HTTP/1.1 401 Unauthorized\nContent-Type: application/json\n%s{\"status\": \"failed\"}\n", cors_headers);
+            }
+            write(sockfd, response, strlen(response));
+        }
+    }
+
+    close(sockfd);
+}
+
+int main() {
+    int sockfd, newsockfd;
+    socklen_t clilen;
+    struct sockaddr_in serv_addr, cli_addr;
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("ERROR opening socket");
+        exit(1);
+    }
+
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(PORT);
+
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        perror("ERROR on binding");
+        exit(1);
+    }
+
+    listen(sockfd, 5);
+    printf("Server online. Listening on port %d...\n", PORT);
+
+    clilen = sizeof(cli_addr);
+
+    while (1) {
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+        if (newsockfd < 0) {
+            perror("ERROR on accept");
+            continue;
+        }
+
+        handle_connection(newsockfd);
+    }
+
+    close(sockfd);
+    return 0;
+}

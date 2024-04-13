@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Página de Upload de Arquivos</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f2f5;
+  }
+
+  .upload-container {
+    background-color: white;
+    padding: 100px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+  }
+
+  .upload-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+
+  .form-input input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+  }
+
+  .drop-area:hover {
+    background-color: #f9f9f9;
+  }
+
+  .form-input label {
+    display: block;
+  }
+
+  .submit-button {
+    margin: 13px;
+    width: 100%;
+    padding: 10px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  .submit-button:hover {
+    background-color: #004494;
+  }
+</style>
+</head>
+<body>
+
+  <div class="upload-container">
+    <h2>Upload de Arquivos</h2>
+    <form id="upload-form">
+      <div class="form-input" id="drop-area">
+        <input type="file" id="your-file-input-id" name="file" required>
+      </div>
+      <button type="button" class="submit-button" id="pos-btn">Enviar</button>
+    </form>
+  </div>
+  <script src="xhr_1.js"></script>
+  <script>
+  document.getElementById('drop-area').addEventListener('click', function() {
+      document.getElementById('your-file-input-id').click();
+  });
+  </script>
+  </body>
+</html>
